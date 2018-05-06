@@ -1,29 +1,52 @@
 import Data.Char
 
-data Tape = Tape [Char] Char [Char] deriving (Show)
+data Tape a = Tape [a] a [a] deriving (Show)
 
-emptyTape :: Tape 
-emptyTape = Tape zero (chr 0) zero 
+emptyDataTape :: Tape Char
+emptyDataTape = Tape zero (chr 0) zero 
     where zero = repeat (chr 0)
 
-printTape :: Tape -> Char 
-printTape (Tape ls m rs) = m
+makeInstructionTape :: String -> Tape Char 
+makeInstructionTape string = Tape [] (head string) (tail string)
 
-moveRight :: Tape -> Tape
-moveRight(Tape ls m (r:rs)) = Tape (ls ++ [m]) r rs
+printTape :: Tape Char -> Char 
+printTape (Tape _ m _) = m
 
-moveLeft :: Tape -> Tape 
-moveLeft(Tape (l:ls) m rs) = Tape ls l ([m] ++ rs)
+moveRight :: Tape a -> Tape a
+moveRight (Tape ls m (r:rs)) = Tape (ls ++ [m]) r rs
 
-doFunc (Tape ls m rs) func = 
-    case func of 
-        '+' -> Left $ Tape ls (chr $ (ord m) + 1) rs
-        '-' -> Left $ Tape ls (chr $ (ord m) - 1) rs
-        '<' -> Left $ moveLeft $ Tape ls m rs 
-        '>' -> Left $ moveRight $ Tape ls m rs 
-        '.' -> Right $ putChar m 
-        ',' -> Left $ Tape ls (chr $ ord (getChar)) rs
+moveRightInst :: Tape Char -> Tape Char 
+moveRightInst tape@(Tape ls m (r:rs)) = moveRight tape 
+moveRightInst (Tape ls m []) = Tape (ls ++ [m]) '0' []
 
-main = do 
-    let myTape = emptyTape
+moveLeft :: Tape a -> Tape a
+moveLeft (Tape (l:ls) m rs) = Tape ls l (m:rs)
+
+--End condition
+doFunc dataTape inst@(Tape _ '0' _) = return ()
+
+--We need to perform the + operation
+doFunc dataTape@(Tape ls m rs) inst@(Tape _ '+' _) = 
+    doFunc (Tape ls (succ m) rs) (moveRightInst inst)
+
+--We need to perform the - operation
+doFunc dataTape@(Tape ls m rs) inst@(Tape _ '-' _) = 
+    doFunc (Tape ls (pred m) rs) (moveRightInst inst)
+
+doFunc dataTape inst@(Tape _ '<' _) = 
+    doFunc (moveLeft dataTape) (moveRightInst inst)
+
+doFunc dataTape inst@(Tape _ '>' _) = 
+    doFunc (moveRight dataTape) (moveRightInst inst)
+
+doFunc dataTape@(Tape _ m _) inst@(Tape _ '.' _) = do 
+    putChar(m)
+    doFunc dataTape (moveRightInst inst)
+
+doFunc dataTape@(Tape ls _ rs) inst@(Tape _ ',' _) = do 
+    m <- getChar 
+    doFunc (Tape ls m rs) (moveRightInst inst)
+
+main = do
+    let myTape = emptyDataTape
     print $ printTape myTape
