@@ -17,10 +17,12 @@ moveLeft(Tape (l:ls) m rs) = Tape ls l ([m] ++ rs)
 
 doFunc (Tape ls m rs) func = 
     case func of 
-        '+' -> Tape ls (chr $ (ord m) + 1) rs
-        '-' -> Tape ls (chr $ (ord m) - 1) rs
-        '<' -> moveLeft $ Tape ls m rs 
-        '>' -> moveRight $ Tape ls m rs 
+        '+' -> Left $ Tape ls (chr $ (ord m) + 1) rs
+        '-' -> Left $ Tape ls (chr $ (ord m) - 1) rs
+        '<' -> Left $ moveLeft $ Tape ls m rs 
+        '>' -> Left $ moveRight $ Tape ls m rs 
+        '.' -> Right $ putChar m 
+        ',' -> Left $ Tape ls (chr $ ord (getChar)) rs
 
 main = do 
     let myTape = emptyTape
