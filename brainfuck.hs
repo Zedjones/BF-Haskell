@@ -23,24 +23,24 @@ moveLeft :: Tape a -> Tape a
 moveLeft (Tape [] m rs) = error "Went too far to the left of the tape"
 moveLeft (Tape ls m rs) = Tape (init ls) (last ls) (m:rs)
 
-seekLeft inst@(Tape ls m _) loops 
-    | last ls == '[' && loops == 1 = inst
-    | last ls == '[' = seekLeft (moveLeft inst) (loops-1)
-    | last ls == ']' = seekLeft (moveLeft inst) (loops+1)
+seekLeft inst@(Tape _ m _) loops
+    | m == ']' = seekLeft (moveLeft inst) (loops+1)
+    | m == '[' && loops == 1 = inst
+    | m == '[' = seekLeft (moveLeft inst) (loops-1)
     | otherwise = seekLeft (moveLeft inst) loops
 
 seekRight inst@(Tape ls m _) loops 
-    | last ls == ']' && loops == 1 = inst 
-    | last ls == ']' = seekLeft (moveLeft inst) (loops-1)
-    | last ls == '[' = seekLeft (moveLeft inst) (loops+1)
+    | m == '[' = seekRight (moveRightInst inst) (loops+1)
+    | m == ']' && loops == 1 = inst 
+    | m == ']' = seekRight (moveRightInst inst) (loops-1)
     | otherwise = seekRight (moveRightInst inst) loops
 
 doFunc dataTape@(Tape _ m _) inst@(Tape _ '[' _)
-    | m == chr 0 = doFunc dataTape (seekRight inst 1)
+    | m == chr 0 = doFunc dataTape (seekRight inst 0) 
     | otherwise = doFunc dataTape (moveRightInst inst)
 
 doFunc dataTape@(Tape _ m _) inst@(Tape _ ']' _) 
-    | m /= chr 0 = doFunc dataTape (seekLeft inst 1)
+    | m /= chr 0 = doFunc dataTape (seekLeft inst 0)
     | otherwise = doFunc dataTape (moveRightInst inst)
 
 --End condition
@@ -69,5 +69,6 @@ doFunc dataTape@(Tape ls _ rs) inst@(Tape _ ',' _) = do
     doFunc (Tape ls m rs) (moveRightInst inst)
 
 main = do
-    let myTape = emptyDataTape
-    print $ printTape myTape
+    let instTape = makeInstructionTape ">++++++++++>>>+>+[>>>+[-[<<<<<[+<<<<<]>>[[-]>[<<+>+>-]<[>+<-]<[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>[-]>>>>+>+<<<<<<-[>+<-]]]]]]]]]]]>[<+>-]+>>>>>]<<<<<[<<<<<]>>>>>>>[>>>>>]++[-<<<<<]>>>>>>-]+>>>>>]<[>++<-]<<<<[<[>+<-]<<<<]>>[->[-]++++++[<++++++++>-]>>>>]<<<<<[<[>+>+<<-]>.<<<<<]>.>>>>]"
+    let dataTape = emptyDataTape
+    doFunc dataTape instTape
