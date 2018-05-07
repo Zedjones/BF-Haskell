@@ -3,7 +3,7 @@ import Data.Char
 data Tape a = Tape [a] a [a] deriving (Show)
 
 emptyDataTape :: Tape Char
-emptyDataTape = Tape zero (chr 0) zero 
+emptyDataTape = Tape [] (chr 0) zero 
     where zero = repeat (chr 0)
 
 makeInstructionTape :: String -> Tape Char 
@@ -20,14 +20,15 @@ moveRightInst (Tape ls m []) = Tape (ls ++ [m]) '0' []
 moveRightInst tape@(Tape ls m (r:rs)) = moveRight tape 
 
 moveLeft :: Tape a -> Tape a
-moveLeft (Tape (l:ls) m rs) = Tape ls l (m:rs)
+moveLeft (Tape [] m rs) = error "Went too far to the left of the tape"
+moveLeft (Tape ls m rs) = Tape (init ls) (last ls) (m:rs)
 
-seekLeft inst@(Tape (l:ls) m _)
-    | l == '[' = inst
+seekLeft inst@(Tape ls m _)
+    | last ls == '[' = inst
     | otherwise = seekLeft (moveLeft inst)
 
-seekRight inst@(Tape (l:ls) m _)
-    | l == ']' = inst 
+seekRight inst@(Tape ls m _)
+    | last ls == ']' = inst 
     | otherwise = seekRight (moveRightInst inst)
 
 doFunc dataTape@(Tape _ m _) inst@(Tape _ '[' _)
