@@ -23,20 +23,24 @@ moveLeft :: Tape a -> Tape a
 moveLeft (Tape [] m rs) = error "Went too far to the left of the tape"
 moveLeft (Tape ls m rs) = Tape (init ls) (last ls) (m:rs)
 
-seekLeft inst@(Tape ls m _)
-    | last ls == '[' = inst
-    | otherwise = seekLeft (moveLeft inst)
+seekLeft inst@(Tape ls m _) loops 
+    | last ls == '[' && loops == 1 = inst
+    | last ls == '[' = seekLeft (moveLeft inst) (loops-1)
+    | last ls == ']' = seekLeft (moveLeft inst) (loops+1)
+    | otherwise = seekLeft (moveLeft inst) loops
 
-seekRight inst@(Tape ls m _)
-    | last ls == ']' = inst 
-    | otherwise = seekRight (moveRightInst inst)
+seekRight inst@(Tape ls m _) loops 
+    | last ls == ']' && loops == 1 = inst 
+    | last ls == ']' = seekLeft (moveLeft inst) (loops-1)
+    | last ls == '[' = seekLeft (moveLeft inst) (loops+1)
+    | otherwise = seekRight (moveRightInst inst) loops
 
 doFunc dataTape@(Tape _ m _) inst@(Tape _ '[' _)
-    | m == chr 0 = doFunc dataTape (seekRight inst) 
+    | m == chr 0 = doFunc dataTape (seekRight inst 1)
     | otherwise = doFunc dataTape (moveRightInst inst)
 
 doFunc dataTape@(Tape _ m _) inst@(Tape _ ']' _) 
-    | m /= chr 0 = doFunc dataTape (seekLeft inst)
+    | m /= chr 0 = doFunc dataTape (seekLeft inst 1)
     | otherwise = doFunc dataTape (moveRightInst inst)
 
 --End condition
