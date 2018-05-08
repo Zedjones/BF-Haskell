@@ -1,4 +1,5 @@
 import Data.Char
+import System.Environment
 
 data Tape a = Tape [a] a [a] deriving (Show)
 
@@ -6,8 +7,11 @@ emptyDataTape :: Tape Char
 emptyDataTape = Tape [] (chr 0) zero 
     where zero = repeat (chr 0)
 
-makeInstructionTape :: String -> Tape Char 
-makeInstructionTape string = Tape [] (head string) (tail string)
+filterInstructionTape :: Char -> Bool
+filterInstructionTape c = c `elem` "[>]<+-,."
+
+makeInstructionTape string = Tape [] (head str) (tail str)
+    where str = filter (filterInstructionTape) string
 
 printTape :: Tape Char -> Char 
 printTape (Tape _ m _) = m
@@ -68,7 +72,12 @@ doFunc dataTape@(Tape ls _ rs) inst@(Tape _ ',' _) = do
     m <- getChar 
     doFunc (Tape ls m rs) (moveRightInst inst)
 
+handleArgs args
+    | length args /= 1 = error "Please provide a brainfuck source file"
+
+handleArgs args = do 
+    code <- readFile (head args)
+    doFunc emptyDataTape (makeInstructionTape code)
+
 main = do
-    let instTape = makeInstructionTape ">++++++++++>>>+>+[>>>+[-[<<<<<[+<<<<<]>>[[-]>[<<+>+>-]<[>+<-]<[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>[-]>>>>+>+<<<<<<-[>+<-]]]]]]]]]]]>[<+>-]+>>>>>]<<<<<[<<<<<]>>>>>>>[>>>>>]++[-<<<<<]>>>>>>-]+>>>>>]<[>++<-]<<<<[<[>+<-]<<<<]>>[->[-]++++++[<++++++++>-]>>>>]<<<<<[<[>+>+<<-]>.<<<<<]>.>>>>]"
-    let dataTape = emptyDataTape
-    doFunc dataTape instTape
+    args <- getArgs; handleArgs args 
